@@ -190,10 +190,8 @@
   <div class="vignette"></div>
 
   <div class="topbar">
-    <button class="chip" id="bgBtn">Achtergrond kiezen</button>
     <button class="chip" id="ambBtn" aria-label="sfeergeluid">Sfeer: aan</button>
     <button class="chip" id="muteBtn" aria-label="effectgeluid">Effecten: aan</button>
-    <input type="file" id="bgFile" accept="image/*" style="display:none">
   </div>
 
   <audio id="music" loop preload="auto"></audio>
@@ -342,19 +340,7 @@
   var muteBtn=document.getElementById("muteBtn");
   muteBtn.addEventListener("click",function(){ muted=!muted; muteBtn.textContent="Effecten: "+(muted?"uit":"aan"); if(!muted) AC(); });
 
-  /* ---------------- EIGEN ACHTERGROND ---------------- */
-  var photo=document.getElementById("photo");
-  var bgBtn=document.getElementById("bgBtn");
-  var bgFile=document.getElementById("bgFile");
-  bgBtn.addEventListener("click",function(){bgFile.click();});
-  bgFile.addEventListener("change",function(e){
-    var f=e.target.files&&e.target.files[0]; if(!f)return;
-    var r=new FileReader();
-    r.onload=function(ev){ setPhoto(ev.target.result); try{localStorage.setItem("kluis_bg",ev.target.result);}catch(err){} };
-    r.readAsDataURL(f);
-  });
-  function setPhoto(url){ photo.style.backgroundImage="url('"+url+"')"; photo.style.opacity="1"; }
-  try{ var saved=localStorage.getItem("kluis_bg"); if(saved) setPhoto(saved); }catch(err){}
+
 
   /* ---------------- TIMER (13 minuten) ---------------- */
   var TIME=13*60;
