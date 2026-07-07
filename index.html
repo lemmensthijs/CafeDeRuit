@@ -181,6 +181,57 @@
   .timer.done{color:#e56b5a; border-color:rgba(229,80,70,.85);}
   @keyframes tpulse{50%{opacity:.45}}
   .vault.locked .reels{opacity:.45; filter:grayscale(.5); pointer-events:none;}
+
+  /* ===================== HINTS ===================== */
+  .platehints{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:14px; padding-top:12px;
+    width:100%; border-top:1px solid rgba(201,162,78,.18);}
+  .phint{position:relative; font-family:inherit; cursor:pointer; font-size:12px; letter-spacing:.5px; color:#241a08;
+    padding:8px 12px; border-radius:9px; border:1px solid var(--brass-hi);
+    background:linear-gradient(180deg,var(--brass-lite),var(--brass) 60%,var(--brass-dk));
+    box-shadow:0 2px 0 #4d3a14, 0 4px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.45);
+    transition:filter .15s, transform .08s, box-shadow .2s;}
+  .phint:hover{filter:brightness(1.07);}
+  .phint:active{transform:translateY(2px);}
+  .phint .plock{display:none;}
+  .phint.locked{cursor:default; color:#8a7d63;
+    background:linear-gradient(180deg,#3a3020,#221a0d); border:1px solid rgba(201,162,78,.28);
+    box-shadow:inset 0 0 10px rgba(0,0,0,.6);}
+  .phint.locked .plock{display:inline;}
+  .phint.locked:hover{filter:none;}
+  .phint.blink{animation:phintblink 1.15s ease-in-out infinite;}
+  @keyframes phintblink{
+    0%,100%{box-shadow:0 2px 0 #4d3a14, 0 4px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.45), 0 0 0 0 rgba(255,207,95,0);}
+    50%{box-shadow:0 2px 0 #4d3a14, 0 4px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.45), 0 0 20px 3px rgba(255,207,95,.9);}
+  }
+  .hintwrap{position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center; padding:20px;
+    background:rgba(4,7,13,.72); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);}
+  .hintwrap.show{display:flex;}
+  .hintcard{width:min(92vw,470px); max-height:84vh; display:flex; flex-direction:column; overflow:hidden;
+    border-radius:18px; border:1px solid rgba(201,162,78,.55);
+    background:linear-gradient(160deg,#241b0e 0%,#140e07 60%,#241b0e 100%);
+    box-shadow:0 26px 64px rgba(0,0,0,.75), inset 0 0 0 5px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,220,150,.16);
+    animation:rise .38s cubic-bezier(.2,.8,.2,1) both;}
+  .hinthead{display:flex; align-items:center; gap:10px; padding:15px 16px 14px;}
+  .hinthead .htitle{font-size:15px; letter-spacing:2px; text-transform:uppercase; color:var(--brass-hi); text-shadow:0 1px 2px #000;}
+  .hinthead .hinttimer{margin-left:auto; font-variant-numeric:tabular-nums; font-size:14px; letter-spacing:1px; color:var(--brass-lite);
+    padding:5px 11px; border-radius:999px; border:1px solid rgba(201,162,78,.5); background:rgba(12,10,6,.55); white-space:nowrap;}
+  .hinthead .hinttimer.warn{color:#ff9d6b; border-color:rgba(255,120,70,.7); animation:tpulse 1s infinite;}
+  .hinthead .hinttimer.done{color:#e56b5a; border-color:rgba(229,80,70,.85);}
+  .hintclose{flex:none; cursor:pointer; border:1px solid rgba(201,162,78,.5); background:rgba(12,10,6,.55); color:var(--brass-lite);
+    width:34px; height:34px; border-radius:50%; font-size:20px; line-height:1; transition:.2s;}
+  .hintclose:hover{border-color:var(--brass); color:var(--brass-hi); background:rgba(46,36,16,.85);}
+  .hintbody{padding:2px 20px 22px; overflow-y:auto; color:#f0e4c8;}
+  .hintbody h3{margin:6px 0 12px; font-size:19px; color:var(--brass-hi); letter-spacing:.5px;}
+  .hintbody ul{margin:0; padding-left:20px;}
+  .hintbody > ul > li{margin:0 0 10px; line-height:1.5; font-size:14.5px;}
+  .hintbody ul ul{margin:9px 0 4px; padding-left:2px; list-style:none;}
+  .hintbody ul ul li{margin:0 0 6px; font-size:13.5px; color:#e6d9ba; position:relative; padding-left:18px; line-height:1.45;}
+  .hintbody ul ul li:before{content:"\203A"; position:absolute; left:3px; top:-1px; color:var(--brass); font-size:16px;}
+  @media (max-width:600px){
+    .phint{font-size:11.5px; padding:7px 10px;}
+    .hintcard{max-height:88vh;}
+    .hinthead .htitle{letter-spacing:1px; font-size:14px;}
+  }
 </style>
 </head>
 <body>
@@ -350,7 +401,9 @@
   function startTimer(){ if(timerStarted) return; timerStarted=true; timeLeft=TIME;
     if(timerEl) timerEl.textContent=fmt(timeLeft);
     timerInt=setInterval(function(){ timeLeft--;
-      if(timeLeft<=0){ timeLeft=0; if(timerEl) timerEl.textContent="0:00"; endTime(); return; }
+      if(timeLeft<0){ timeLeft=0; }
+      hintTick(timeLeft);
+      if(timeLeft<=0){ if(timerEl) timerEl.textContent="0:00"; endTime(); return; }
       if(timeLeft<=60 && timerEl) timerEl.classList.add("warn");
       if(timerEl) timerEl.textContent=fmt(timeLeft);
     },1000); }
@@ -381,6 +434,101 @@
   if(startover){ startover.addEventListener("click",function(){ startAudio(); startTimer(); try{tickSound();}catch(e){} startover.classList.add("hide"); setTimeout(function(){ startover.style.display="none"; },700); }); }
   function firstGesture(){ if(ambOn && music && music.paused){ startAmbience(); } document.removeEventListener("pointerdown",firstGesture); document.removeEventListener("keydown",firstGesture); }
   document.addEventListener("pointerdown",firstGesture); document.addEventListener("keydown",firstGesture);
+
+  /* ---------------- HINTS (toegankelijk na 3/6/9/12 min) ---------------- */
+  var HINTS=[
+    {tab:"Hint 1", tag:"Aanpak", at:180, html:
+      '<h3>Hint 1 \u00B7 Aanpak</h3>'+
+      '<ul>'+
+      '<li>Begin bij de tafels die vastliggen. Twee aanwijzingen geven je meteen een tafelnummer.</li>'+
+      '<li>Aanwijzing 5 (bloedneus) en aanwijzing 1 (Mo) zijn direct. Aanwijzing 4 geeft je daarna een derde tafel.</li>'+
+      '</ul>'},
+    {tab:"Hint 2", tag:"Koppel je kennis", at:360, html:
+      '<h3>Hint 2 \u00B7 Koppel eerst je kennis</h3>'+
+      '<ul>'+
+      '<li>Je hebt techniek \u00E9n hulproute per letsel nodig om de aanwijzingen te kunnen gebruiken. De kern:'+
+        '<ul>'+
+        '<li>diepe lieswond \u2192 wondopstopping (112)</li>'+
+        '<li>spuitende onderarm \u2192 tourniquet (112)</li>'+
+        '<li>mes in de schouder \u2192 laten zitten &amp; fixeren (112)</li>'+
+        '<li>snee onderarm onder controle \u2192 wonddrukverband (huisarts)</li>'+
+        '<li>bloedneus \u2192 dichtknijpen (zelf)</li>'+
+        '</ul>'+
+      '</li>'+
+      '</ul>'},
+    {tab:"Hint 3", tag:"Plaats de namen", at:540, html:
+      '<h3>Hint 3 \u00B7 Plaats de namen</h3>'+
+      '<ul>'+
+      '<li>Wie had de bloedneus (tafel 5)? Niet Kim (opstoppen) en niet Bram (tourniquet). Mo zit op tafel 3 en aanwijzing 8 sluit Tygo uit.</li>'+
+      '<li>Dan blijven het mes en de \u2018snee onderarm\u2019 over voor Mo en Tygo \u2014 let op w\u00E9lke tafel het mes heeft.</li>'+
+      '</ul>'},
+    {tab:"Hint 4", tag:"De laatste knoop", at:720, html:
+      '<h3>Hint 4 \u00B7 De laatste knoop</h3>'+
+      '<ul>'+
+      '<li>Kim en Bram zitten aan tafel 1 en 2. Aanwijzing 7 zegt: de tourniquet zit aan een h\u00F3ger tafelnummer dan het opstoppen.</li>'+
+      '<li>Daarmee liggen de laatste twee tafels vast. Lees nu de drie code-cijfers via Stap 3.</li>'+
+      '</ul>'}
+  ];
+  var hUnlocked=[false,false,false,false], hRead=[false,false,false,false], pBtns=[];
+  function hfmt(s){ var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
+
+  /* Vier knoppen in de kluisplaat (onder de status) */
+  var plateEl=document.querySelector(".plate");
+  var platehints=document.createElement("div"); platehints.className="platehints";
+  HINTS.forEach(function(h,idx){
+    var b=document.createElement("button"); b.type="button"; b.className="phint locked"; b.disabled=true;
+    b.innerHTML='<span class="plock">\uD83D\uDD12 </span><span class="plab">'+h.tab+'</span>';
+    b.addEventListener("click",function(){ if(!hUnlocked[idx]) return; try{AC();}catch(e){} openHintAt(idx); });
+    platehints.appendChild(b); pBtns.push(b);
+  });
+  if(plateEl) plateEl.appendChild(platehints);
+
+  /* Hint-venster */
+  var hintWrap=document.createElement("div"); hintWrap.className="hintwrap";
+  hintWrap.innerHTML=
+    '<div class="hintcard" role="dialog" aria-modal="true" aria-label="Hint">'+
+    '<div class="hinthead">'+
+      '<span class="htitle" id="hintHeadTitle">Hint</span>'+
+      '<span class="hinttimer" id="hintTimer">\u23F1 '+hfmt(TIME)+'</span>'+
+      '<button class="hintclose" type="button" aria-label="Sluiten">\u00D7</button>'+
+    '</div>'+
+    '<div class="hintbody"></div>'+
+    '</div>';
+  document.body.appendChild(hintWrap);
+  var hBodyEl=hintWrap.querySelector(".hintbody");
+  var hTimerEl=hintWrap.querySelector("#hintTimer");
+  var hHeadEl=hintWrap.querySelector("#hintHeadTitle");
+
+  function updatePlate(){
+    for(var i=0;i<4;i++){ var b=pBtns[i];
+      if(hUnlocked[i]){ b.classList.remove("locked"); b.disabled=false; b.classList.toggle("blink", !hRead[i]); }
+      else{ b.classList.add("locked"); b.disabled=true; b.classList.remove("blink"); }
+    }
+  }
+  function selectHint(idx){
+    hRead[idx]=true;
+    if(hHeadEl) hHeadEl.textContent=HINTS[idx].tab;
+    hBodyEl.innerHTML=HINTS[idx].html; hBodyEl.scrollTop=0;
+    updatePlate();
+  }
+  function openHintAt(idx){ if(!hUnlocked[idx]) return; hintWrap.classList.add("show"); selectHint(idx); }
+  function closeHints(){ hintWrap.classList.remove("show"); }
+  function hintPing(){ if(muted) return; try{ var c=AC(); if(!c) return; var t=c.currentTime; tone(880,t,0.13,"sine",0.11); tone(1320,t+0.12,0.18,"sine",0.09); }catch(e){} }
+
+  function hintTick(left){
+    var elapsed=TIME-left, newly=false, i;
+    for(i=0;i<4;i++){ if(!hUnlocked[i] && elapsed>=HINTS[i].at){ hUnlocked[i]=true; newly=true; } }
+    if(newly) hintPing();
+    if(hTimerEl){ hTimerEl.textContent="\u23F1 "+hfmt(left<0?0:left);
+      hTimerEl.classList.toggle("warn", left<=60 && left>0); hTimerEl.classList.toggle("done", left<=0); }
+    updatePlate();
+  }
+
+  hintWrap.querySelector(".hintclose").addEventListener("click", closeHints);
+  hintWrap.addEventListener("click", function(e){ if(e.target===hintWrap) closeHints(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape" && hintWrap.classList.contains("show")) closeHints(); });
+
+  updatePlate();
 
   // init reels
   for(var k=0;k<3;k++) render(k,1);
